@@ -47,13 +47,20 @@ fn bb_range() -> &'static str {
     "AA-22,AKo-A2o,AKs-A2s,KQo-K2o,KQs-K2s,QJo-Q2o,QJs-Q2s,JTo-J2o,JTs-J2s,T9o-T2o,T9s-T2s,98s-92s,87s-82s,76s-72s,65s-62s,54s-52s"
 }
 
-async fn preflop(Json(player):Json<Player>) -> &'static str {
+async fn preflop(Json(player):Json<Player>) -> (StatusCode, Json<PreflopResult>) {
     let range = utg_range().parse::<Range>().unwrap();
     let card1 = card_from_str(&player.cards[0..2]).unwrap();
     let card2 = card_from_str(&player.cards[2..4]).unwrap();
 
-    if range.get_weight_by_cards(card1, card2) == 0.0 { return "Flod plz"; }
-    "Go on"
+    if range.get_weight_by_cards(card1, card2) == 0.0 {
+        let result = PreflopResult {
+            strategy: "Fold".parse().unwrap(),
+        };
+        (StatusCode::OK, Json(result)); }
+    let result = PreflopResult {
+        strategy: "Call".parse().unwrap(),
+    };
+    (StatusCode::OK, Json(result))
 }
 
 // basic handler that responds with a static string
@@ -152,4 +159,9 @@ struct Player {
 struct User {
     id: u64,
     username: String,
+}
+
+#[derive(Serialize)]
+struct PreflopResult {
+    strategy: String,
 }
